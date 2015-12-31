@@ -144,24 +144,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onResponse(Response response) throws IOException {
                 final File file=new File(Environment.getExternalStorageDirectory()+File.separator+"xx.png");
                 if (!file.exists()) {
-                    if (file.createNewFile()) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                tvContent.setText("Error: Can't Create new File,Check permission.");
-                            }
-                        });
-                        return;
-                    }
+                    file.createNewFile();
                 }
                 InputStream is = response.body().byteStream();
                 BufferedInputStream input = new BufferedInputStream(is);
                 OutputStream output = new FileOutputStream(file);
 
                 byte[] data = new byte[1024];
-
-                while (( input.read(data)) != -1) {
-                    output.write(data);
+                int readLength;
+                while ((readLength= input.read(data)) >0) {
+                    output.write(data,0,readLength);
                 }
                 output.flush();
                 output.close();
