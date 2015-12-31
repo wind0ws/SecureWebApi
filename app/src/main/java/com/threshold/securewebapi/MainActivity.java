@@ -75,8 +75,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         client.interceptors().add(interpolator);
             client.newCall(request).enqueue(new Callback() {
                 @Override
-                public void onFailure(Request request, IOException e) {
+                public void onFailure(Request request, final IOException e) {
                     LogUtils.e(e.toString());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            tvContent.setText(e.toString());
+                        }
+                    });
                 }
 
                 @Override
@@ -124,15 +130,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .build();
         client.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(Request request, IOException e) {
+            public void onFailure(Request request, final IOException e) {
                 LogUtils.d(e.toString());
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tvContent.setText(e.toString());
+                    }
+                });
             }
 
             @Override
             public void onResponse(Response response) throws IOException {
                 final File file=new File(Environment.getExternalStorageDirectory()+File.separator+"xx.png");
                 if (!file.exists()) {
-                    file.createNewFile();
+                    if (file.createNewFile()) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                tvContent.setText("Error: Can't Create new File,Check permission.");
+                            }
+                        });
+                        return;
+                    }
                 }
                 InputStream is = response.body().byteStream();
                 BufferedInputStream input = new BufferedInputStream(is);
@@ -140,12 +160,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 byte[] data = new byte[1024];
 
-                long total = 0;
-                int count=0;
-
-                while ((count = input.read(data)) != -1) {
-                    total += count;
-                    output.write(data, 0, count);
+                while (( input.read(data)) != -1) {
+                    output.write(data);
                 }
                 output.flush();
                 output.close();
@@ -162,13 +178,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     private void testUploadFile() {
-        File file = new File(Environment.getExternalStorageDirectory() + File.separator + "mili_log.txt");
+        File file1 = new File(Environment.getExternalStorageDirectory() + File.separator + "testUpload.txt");
+        if (!file1.exists()) {
+            try {
+               if (file1.createNewFile()){
+                FileOutputStream outputStream=new FileOutputStream(file1);
+                outputStream.write("File1:This is A File Created By WebApi Client!".getBytes("UTF-8"));
+                   outputStream.flush();
+                outputStream.close();
+               }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        File file2 = new File(Environment.getExternalStorageDirectory() + File.separator + "testUpload2.txt");
+        if (!file2.exists()) {
+            try {
+                if (file2.createNewFile()){
+                    FileOutputStream outputStream=new FileOutputStream(file2);
+                    outputStream.write("File2:This is A File Created By WebApi Client!".getBytes("UTF-8"));
+                    outputStream.flush();
+                    outputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         RequestBody requestBody = new MultipartBuilder().type(MultipartBuilder.FORM)
                 .addFormDataPart("hello", "android")
-                .addFormDataPart("photo", file.getName(), RequestBody.create(MediaType.parse("text/plain"), file))
+                .addFormDataPart("photo", file1.getName(), RequestBody.create(MediaType.parse("text/plain"), file1))
                 .addPart(Headers.of("Content-Disposition", "form-data; name=\"another\";filename=\"another.dex\""),
                         RequestBody.create(MediaType.parse("application/octet-stream"),
-                                new File(Environment.getExternalStorageDirectory()+File.separator+"wifi_config.log")))
+                                file2))
                 .build();
         Request request = new Request.Builder()
                 .post(requestBody)
@@ -179,8 +220,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         client.interceptors().add(interpolator);
         client.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(Request request, IOException e) {
+            public void onFailure(Request request, final IOException e) {
                 LogUtils.e(e.toString());
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tvContent.setText(e.toString());
+                    }
+                });
             }
 
             @Override
@@ -209,8 +256,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         client.interceptors().add(interpolator);
         client.newCall(postRequest).enqueue(new Callback() {
             @Override
-            public void onFailure(Request request, IOException e) {
+            public void onFailure(Request request, final IOException e) {
                 LogUtils.e(e.toString());
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tvContent.setText(e.toString());
+                    }
+                });
             }
 
             @Override
