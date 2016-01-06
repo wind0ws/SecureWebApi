@@ -1,5 +1,5 @@
 # SecureWebApi
-The infrastructure of Secure WebApi.Both server and client can verify the signature which client or sever signed.
+The infrastructure of Secure WebApi.Both server and client can verify the signature which client or server signed.
 This is look like amazon s3,ensure server is your server,client is your client.And others can't invoke your Api without your permission.
 If you dont undestand what I said,I suggest you read the doucument of amazon s3. 
 This project contains sample and libray.You can modify it to your own business.
