@@ -1,1 +1,1 @@
-include ':app', ':hmacauth'
+include ':app', ':hmacauth', ':webapiauthlib', ':webapiauth'

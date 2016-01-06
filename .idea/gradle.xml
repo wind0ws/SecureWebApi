@@ -12,6 +12,8 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/hmacauth" />
+            <option value="$PROJECT_DIR$/webapiauth" />
+            <option value="$PROJECT_DIR$/webapiauthlib" />
           </set>
         </option>
       </GradleProjectSettings>
