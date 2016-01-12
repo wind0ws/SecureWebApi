@@ -1,13 +1,14 @@
 package com.threshold.webapiauth;
 
-import com.squareup.okhttp.Interceptor;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
+import okhttp3.Interceptor;
+import okhttp3.Request;
+import okhttp3.Response;
 import com.threshold.webapiauth.util.MD5;
 import com.threshold.webapiauth.util.Util;
 
 
 import java.io.IOException;
+import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 
 import okio.Buffer;
@@ -55,7 +56,7 @@ public class SecureRequestInterpolator implements Interceptor {
         }
         try {
             String representation = iBuildMessageRepresentation.buildRequestRepresentation(
-                    request.uri(), request.method(), utcTime, contentType, contentMd5);
+                    request.url(), request.method(), utcTime, contentType, contentMd5);
            // LogUtils.i(representation);
             String signature = iCalculateSignature.signature(secretForAppKey, representation);
            // LogUtils.i(signature);

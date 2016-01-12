@@ -3,19 +3,18 @@ package com.threshold.webapiauth;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.squareup.okhttp.Callback;
-import com.squareup.okhttp.Headers;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.MultipartBuilder;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
+import com.threshold.webapiauth.api.ApiClient;
+import com.threshold.webapiauth.api.IFileUpDownApi;
+import com.threshold.webapiauth.api.IProductsApi;
+import com.threshold.webapiauth.model.FileModel;
+import com.threshold.webapiauth.model.Product;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -23,14 +22,38 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import okhttp3.Request;
+import okhttp3.OkHttpClient;
+import okhttp3.Callback;
+import okhttp3.Response;
+import okhttp3.RequestBody;
+import okhttp3.Headers;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.ResponseBody;
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action0;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+
+    private static final String TAG = "MainActivity";
 
     private EditText etServerIp;
     private TextView tvContent;
     private Button button1,button2,button3,button4;
 
     private SecureRequestInterpolator interpolator;
+
+    private ApiClient apiClient;
+   // private FileUpDownClient fileUpDownClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +67,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void initFields() {
         //interpolator = new SecureRequestInterpolator1("username", "password");
         interpolator = new SecureRequestInterpolator(Constant.APP_KEY, Constant.APP_SECRET);//this is the key and password shared between server and client
+        apiClient = new ApiClient(getServerUrl());
+       // fileUpDownClient = new FileUpDownClient(getServerUrl());
     }
 
     private void initEvents() {
@@ -62,9 +87,225 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         etServerIp = (EditText) findViewById(R.id.etServerIp);
     }
 
+    private void testRetrofitGet() {
+        IProductsApi productsApi = apiClient.getProductsApi();
+        productsApi.getProducts()
+                .subscribeOn(Schedulers.io())
+                .flatMap(new Func1<List<Product>, Observable<Product>>() {
+                    @Override
+                    public Observable<Product> call(List<Product> products) {
+                        return Observable.from(products);
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnSubscribe(new Action0() {
+                    @Override
+                    public void call() {
+                        tvContent.setText("");
+                    }
+                })
+                .finallyDo(new Action0() {
+                    @Override
+                    public void call() {
+                        Toast.makeText(MainActivity.this, "finallyDo请求完成", Toast.LENGTH_SHORT).show();
+                    }
+                }).subscribe(new Subscriber<Product>() {
+            @Override
+            public void onCompleted() {
+                Toast.makeText(MainActivity.this, "onCompleted", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.d(TAG, e.toString());
+                Toast.makeText(MainActivity.this, "onError请求失败了....", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onNext(Product product) {
+                Toast.makeText(MainActivity.this, " onNext获得结果 ;）", Toast.LENGTH_SHORT).show();
+                tvContent.setText(String.format("%s\n%s", tvContent.getText(), product));
+            }
+        });
+    }
+
+
+    private void testRetrofitPost() {
+        IProductsApi productsApi = apiClient.getProductsApi();
+        productsApi.addProduct(new Product(100, "AppleJuice", "Fruit", 12.13d))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Product>() {
+                    @Override
+                    public void onCompleted() {
+                        Toast.makeText(MainActivity.this, "onCompleted", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.d(TAG, e.toString());
+                        Toast.makeText(MainActivity.this, "onError请求失败了....", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onNext(Product product) {
+                        Toast.makeText(MainActivity.this, " onNext获得结果 ;）", Toast.LENGTH_SHORT).show();
+                        tvContent.setText(product.toString());
+                    }
+                });
+    }
+
+    private void testRetrofitDownload() {
+        IFileUpDownApi api = apiClient.getFileUpDownApi();
+        api.downloadFile("486a0837-2a85-4280-a09d-36717c730837.png")
+                .subscribeOn(Schedulers.io())
+                .map(new Func1<ResponseBody, File>() {
+                    @Override
+                    public File call(ResponseBody responseBody) {
+                        File file = null;
+                        if (responseBody != null) {
+                            file = new File(Environment.getExternalStorageDirectory() + File.separator + "xx.png");
+                            if (!file.exists()) {
+                                try {
+                                    file.createNewFile();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            InputStream inputStream = responseBody.byteStream();
+                            //BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+                            byte[] buffer = new byte[2048];
+                            try {
+                                OutputStream outputStream = new FileOutputStream(file);
+                                int readLength;
+                                while ((readLength = inputStream.read(buffer)) > 0) {
+                                    outputStream.write(buffer, 0, readLength);
+                                }
+                                outputStream.flush();
+                                outputStream.close();
+                                inputStream.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        return file;
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnSubscribe(new Action0() {
+                    @Override
+                    public void call() {
+                        tvContent.setText("");
+                    }
+                })
+                .subscribe(new Subscriber<File>() {
+                    @Override
+                    public void onCompleted() {
+                        Toast.makeText(MainActivity.this, "onCompleted", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.d(TAG, e.toString());
+                        Toast.makeText(MainActivity.this, "onError请求失败了....", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onNext(File file) {
+                        String str;
+                        if (file != null) {
+                            str = "下载成功:" + file.getPath();
+                        } else {
+                            str = "下载失败";
+                        }
+                        Toast.makeText(MainActivity.this, str, Toast.LENGTH_SHORT).show();
+                        tvContent.setText(str);
+                    }
+                });
+    }
+
+
+    /**
+     * Upload File To Server
+     * See https://github.com/square/retrofit/issues/1063
+     */
+    private void testRetrofitUpload() {
+        File file1 = new File(Environment.getExternalStorageDirectory() + File.separator + "testUpload.txt");
+        if (!file1.exists()) {
+            try {
+                if (file1.createNewFile()){
+                    FileOutputStream outputStream=new FileOutputStream(file1);
+                    outputStream.write("File1:This is A File Created By WebApi Client!".getBytes("UTF-8"));
+                    outputStream.flush();
+                    outputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        File file2 = new File(Environment.getExternalStorageDirectory() + File.separator + "testUpload2.txt");
+        if (!file2.exists()) {
+            try {
+                if (file2.createNewFile()){
+                    FileOutputStream outputStream=new FileOutputStream(file2);
+                    outputStream.write("File2:This is A File Created By WebApi Client!".getBytes("UTF-8"));
+                    outputStream.flush();
+                    outputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        RequestBody requestBody1 = RequestBody.create(MultipartBody.FORM, file1);
+        RequestBody requestBody2 = RequestBody.create(MultipartBody.FORM, file2);
+        IFileUpDownApi fileUpDownApi = apiClient.getFileUpDownApi();
+        Map<String, RequestBody> map = new HashMap<>();
+        map.put("file\"; filename=\" 1.txt", requestBody1);
+        map.put("file\"; filename=\" 2.txt", requestBody2);
+        fileUpDownApi.uploadFile(map)
+                .subscribeOn(Schedulers.io())
+                .flatMap(new Func1<List<FileModel>, Observable<FileModel>>() {
+                    @Override
+                    public Observable<FileModel> call(List<FileModel> fileModels) {
+                        return Observable.from(fileModels);
+                    }
+                })
+                .map(new Func1<FileModel, String>() {
+                    @Override
+                    public String call(FileModel fileModel) {
+                        return fileModel.toString();
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnSubscribe(new Action0() {
+                    @Override
+                    public void call() {
+                        tvContent.setText("");
+                    }
+                })
+                .subscribe(new Subscriber<String>() {
+                    @Override
+                    public void onCompleted() {
+                        Toast.makeText(MainActivity.this, "onCompleted", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e(TAG, e.toString());
+                        Toast.makeText(MainActivity.this, "onError请求失败了....", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onNext(String s) {
+                        tvContent.setText(String.format("%s\n%s", tvContent.getText(), s));
+                    }
+                });
+    }
+
+
     private void testGet() {
         Request request = new Request.Builder()
-                .url("http://"+getServerIp()+"/api/products")
+                .url(getServerUrl()+"api/products")
                 .build();
         OkHttpClient client = new OkHttpClient();
         client.interceptors().add(interpolator);
@@ -81,7 +322,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             @Override
-            public void onResponse(final Response response) throws IOException {
+            public void onResponse(Response response) throws IOException {
                 final String result = response.body().string();
                 runOnUiThread(new Runnable() {
                     @Override
@@ -96,32 +337,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v) {
+        apiClient.setBaseUrl(getServerUrl());
+      //  fileUpDownClient.setBaseUrl(getServerUrl());
         switch (v.getId()) {
             case R.id.button1:
-                testGet();
+//                testGet();
+                testRetrofitGet();
                 break;
             case R.id.button2:
-                testPost();
+                testRetrofitPost();
+//                testPost();
                 break;
             case R.id.button3:
-                testUploadFile();
+                testRetrofitUpload();
+//                testUploadFile();
                 break;
             case R.id.button4:
-                testDownloadFile();
+                testRetrofitDownload();
+//                testDownloadFile();
                 break;
         }
     }
 
-    private String getServerIp()
-    {
-        return etServerIp.getText().toString();
+    private String getServerUrl() {
+        return String.format("http://%s/", etServerIp.getText().toString()) ;
     }
 
     private void testDownloadFile() {
         OkHttpClient client = new OkHttpClient();
         client.interceptors().add(interpolator);
         Request request = new Request.Builder()
-                .url("http://"+getServerIp()+"/api/fileupdown?filename=486a0837-2a85-4280-a09d-36717c730837.png") //make sure your server has the file.
+                .url(getServerUrl()+"api/fileupdown?filename=486a0837-2a85-4280-a09d-36717c730837.png") //make sure your  the file exists on your server.
                 .build();
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -191,20 +437,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 e.printStackTrace();
             }
         }
-        RequestBody requestBody = new MultipartBuilder().type(MultipartBuilder.FORM)
+        RequestBody requestBody = new MultipartBody.Builder().setType(MultipartBody.FORM)
+                .addFormDataPart("file1", file1.getName(), RequestBody.create(MediaType.parse("text/plain"), file1))
+                .addFormDataPart("file2", file2.getName(), RequestBody.create(MediaType.parse("text/plain"), file2))
+                .build();
+       /* RequestBody requestBody=new MultipartBody.Builder().setType(MultipartBody.FORM)
                 .addFormDataPart("hello", "android")
                 .addFormDataPart("photo", file1.getName(), RequestBody.create(MediaType.parse("text/plain"), file1))
                 .addPart(Headers.of("Content-Disposition", "form-data; name=\"another\";filename=\"another.dex\""),
                         RequestBody.create(MediaType.parse("application/octet-stream"),
                                 file2))
-                .build();
+                .build();*/
+//        RequestBody requestBody = new MultipartBuilder().type(MultipartBuilder.FORM)
+//                .addFormDataPart("hello", "android")
+//                .addFormDataPart("photo", file1.getName(), RequestBody.create(MediaType.parse("text/plain"), file1))
+//                .addPart(Headers.of("Content-Disposition", "form-data; name=\"another\";filename=\"another.dex\""),
+//                        RequestBody.create(MediaType.parse("application/octet-stream"),
+//                                file2))
+//                .build();
         Request request = new Request.Builder()
                 .post(requestBody)
-                .url("http://"+getServerIp()+"/api/fileupdown")
+                .url(getServerUrl()+"api/fileupdown")
                 .build();
 
-        OkHttpClient client = new OkHttpClient();
-        client.interceptors().add(interpolator);
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(interpolator).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Request request, final IOException e) {
@@ -236,7 +493,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), body);
         Request postRequest = new Request.Builder()
                 .post(requestBody)
-                .url("http://"+getServerIp()+"/api/products/")
+                .url(getServerUrl() + "api/products/")
                 .build();
 
         OkHttpClient client = new OkHttpClient();
