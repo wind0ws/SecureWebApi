@@ -1,12 +1,10 @@
 package com.threshold.webapiauth;
 
-
-
-import com.threshold.webapiauth.util.SHA1;
+//import com.threshold.webapiauth.util.SHA1;
 import com.threshold.webapiauth.util.TextUtils;
 
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
+//import java.io.UnsupportedEncodingException;
+//import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
