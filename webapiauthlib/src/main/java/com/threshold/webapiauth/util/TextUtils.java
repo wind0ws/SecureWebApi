@@ -1,6 +1,7 @@
 package com.threshold.webapiauth.util;
 
 /**
+ * As Name you can see：Utils of Text。
  * Created by Threshold on 2016/1/5.
  */
 public class TextUtils {
@@ -9,7 +10,7 @@ public class TextUtils {
      * @param str the string to be examined
      * @return true if str is null or zero length
      */
-    public static boolean isEmpty( CharSequence str) {
+    public static boolean isEmpty(CharSequence str) {
         return str == null || str.length() == 0;
     }
 }

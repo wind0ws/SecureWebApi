@@ -1,6 +1,5 @@
 package com.threshold.webapiauth.util;
 
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,8 +10,7 @@ import javax.crypto.spec.SecretKeySpec;
  * Created by Threshold on 2015/12/28.
  */
 public class HMAC {
-
-    private final static String HMAC_SHA1_ALGORITHM = "HmacSHA1";
+   // private final static String HMAC_SHA1_ALGORITHM = "HmacSHA1";
     private final static String HMAC_SHA256_ALGORITHM = "HmacSHA256";
 
     private static Map<String,SecretKeySpec> signingKeyMap;
@@ -26,7 +24,7 @@ public class HMAC {
         if (signingKeyMap.containsKey(secret)) {
             signingKey= signingKeyMap.get(secret);
         } else {
-            signingKey = new SecretKeySpec(secret.getBytes("UTF-8"),
+            signingKey = new SecretKeySpec(secret.getBytes(Util.UTF8),
                 HMAC_SHA256_ALGORITHM);
             signingKeyMap.put(secret, signingKey);
         }
@@ -34,7 +32,7 @@ public class HMAC {
 //                HMAC_SHA256_ALGORITHM);
         Mac mac = Mac.getInstance(HMAC_SHA256_ALGORITHM);
         mac.init(signingKey);
-        byte[] rawHmac = mac.doFinal(data.getBytes("UTF-8"));
+        byte[] rawHmac = mac.doFinal(data.getBytes(Util.UTF8));
         return Base64.encodeToString(rawHmac, Base64.NO_WRAP);
     }
 }

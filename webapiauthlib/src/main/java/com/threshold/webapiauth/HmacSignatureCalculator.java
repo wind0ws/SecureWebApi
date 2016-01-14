@@ -1,6 +1,5 @@
 package com.threshold.webapiauth;
 
-
 import com.threshold.webapiauth.util.HMAC;
 import com.threshold.webapiauth.util.TextUtils;
 

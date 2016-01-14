@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onNext(Product product) {
-                Toast.makeText(MainActivity.this, " onNext获得结果 ;）", Toast.LENGTH_SHORT).show();
+               // Toast.makeText(MainActivity.this, " onNext获得结果 ;）", Toast.LENGTH_SHORT).show();
                 tvContent.setText(String.format("%s\n%s", tvContent.getText(), product));
             }
         });
