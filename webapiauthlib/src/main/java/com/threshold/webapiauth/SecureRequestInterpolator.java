@@ -38,7 +38,7 @@ public class SecureRequestInterpolator implements Interceptor {
     @Override
     public Response intercept(Chain chain) throws IOException {
         String secretForAppKey = iSecretRepository.getSecretForAppKey(appKey);
-        String utcTime = Util.getUtcTime();
+        String greenwichTime = Util.getGreenwichDate(); //Util.getUtcTime();
         String contentType = "";
         String contentMd5 = "";
         Request request = chain.request();
@@ -57,7 +57,7 @@ public class SecureRequestInterpolator implements Interceptor {
         }
         try {
             String representation = iBuildMessageRepresentation.buildRequestRepresentation(
-                    request.url(), request.method(), utcTime, contentType, contentMd5);
+                    request.url(), request.method(), greenwichTime, contentType, contentMd5);
            // LogUtils.i(representation);
             String signature = iCalculateSignature.signature(secretForAppKey, representation);
             String auth= Base64.encodeToString(
@@ -65,7 +65,9 @@ public class SecureRequestInterpolator implements Interceptor {
             String authorization =String.format(Configuration.AuthenticationFormat,auth);
            // LogUtils.i(signature);
             Request.Builder requestBuilder = request.newBuilder();
-            requestBuilder.header(Configuration.XDateHeader, utcTime)
+
+            requestBuilder.header(Configuration.DateHeader,greenwichTime)
+                    /*.header(Configuration.XDateHeader, greenwichTime)*/
                     /*.header(Configuration.AppKeyHeader, appKey)*/
                     .header(Configuration.ContentMd5Header, contentMd5)
                     .header(Configuration.AuthorizationHeader, authorization);

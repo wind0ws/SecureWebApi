@@ -7,6 +7,7 @@ package com.threshold.webapiauth;
  */
 public class Configuration {
 //    public static final String AppKeyHeader ="X-ApiAuth-AppKey";
+    public static final String DateHeader = "Date";
     public static final String XDateHeader = "X-Date";
     public static final String ContentMd5Header = "Content-MD5";
     public static final String AuthorizationHeader = "Authorization";

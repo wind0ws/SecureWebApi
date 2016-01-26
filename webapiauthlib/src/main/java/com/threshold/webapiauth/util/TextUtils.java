@@ -1,9 +1,5 @@
 package com.threshold.webapiauth.util;
 
-/**
- * As Name you can see：Utils of Text。
- * Created by Threshold on 2016/1/5.
- */
 public class TextUtils {
     /**
      * Returns true if the string is null or 0-length.

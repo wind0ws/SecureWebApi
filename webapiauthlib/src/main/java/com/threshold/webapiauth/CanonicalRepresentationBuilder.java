@@ -18,7 +18,7 @@ public class CanonicalRepresentationBuilder implements IBuildMessageRepresentati
     }
 
     @Override
-    public String buildRequestRepresentation(HttpUrl url,String method,String utcTime, String contentType,String contentMd5) throws Exception {
+    public String buildRequestRepresentation(HttpUrl url,String method,String greenwichTime, String contentType,String contentMd5) throws Exception {
         String content_Type ;
         if (method.equalsIgnoreCase("GET")) {
             content_Type = "";
@@ -26,6 +26,6 @@ public class CanonicalRepresentationBuilder implements IBuildMessageRepresentati
             content_Type = contentType;
         }
         String absolutePath = url.uri().getPath();
-        return method + "\n" + contentMd5 + "\n" + content_Type + "\n" + utcTime+ "\n" + appKey + "\n" + absolutePath;
+        return method + "\n" + contentMd5 + "\n" + content_Type + "\n" + greenwichTime + "\n" + appKey + "\n" + absolutePath;
     }
 }

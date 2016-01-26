@@ -1,8 +1,8 @@
 package com.threshold.webapiauth;
 
+import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -26,14 +26,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import okhttp3.Request;
-import okhttp3.OkHttpClient;
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import okhttp3.Callback;
-import okhttp3.Response;
-import okhttp3.RequestBody;
-import okhttp3.Headers;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import okhttp3.ResponseBody;
 import rx.Observable;
 import rx.Subscriber;
@@ -46,21 +48,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final String TAG = "MainActivity";
 
-    private EditText etServerIp;
-    private TextView tvContent;
-    private Button button1,button2,button3,button4;
+    @Bind(R.id.etServerIp)
+    EditText etServerIp;
+    @Bind(R.id.button1)
+    Button button1;
+    @Bind(R.id.button2)
+    Button button2;
+    @Bind(R.id.button3)
+    Button button3;
+    @Bind(R.id.button4)
+    Button button4;
+    @Bind(R.id.tvContent)
+    TextView tvContent;
+
 
     private SecureRequestInterpolator interpolator;
 
     private ApiClient apiClient;
-   // private FileUpDownClient fileUpDownClient;
+    // private FileUpDownClient fileUpDownClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        initView();
-        initEvents();
+        ButterKnife.bind(this);
+//        initView();
+//        initEvents();
         initFields();
     }
 
@@ -68,10 +81,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //interpolator = new SecureRequestInterpolator1("username", "password");
         interpolator = new SecureRequestInterpolator(Constant.APP_KEY, Constant.APP_SECRET);//this is the key and password shared between server and client
         apiClient = new ApiClient(getServerUrl());
-       // fileUpDownClient = new FileUpDownClient(getServerUrl());
+        // fileUpDownClient = new FileUpDownClient(getServerUrl());
     }
 
-    private void initEvents() {
+  /*  private void initEvents() {
         button1.setOnClickListener(this);
         button2.setOnClickListener(this);
         button3.setOnClickListener(this);
@@ -85,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         button3 = (Button) findViewById(R.id.button3);
         button4 = (Button) findViewById(R.id.button4);
         etServerIp = (EditText) findViewById(R.id.etServerIp);
-    }
+    }*/
 
     private void testRetrofitGet() {
         IProductsApi productsApi = apiClient.getProductsApi();
@@ -123,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onNext(Product product) {
-               // Toast.makeText(MainActivity.this, " onNext获得结果 ;）", Toast.LENGTH_SHORT).show();
+                // Toast.makeText(MainActivity.this, " onNext获得结果 ;）", Toast.LENGTH_SHORT).show();
                 tvContent.setText(String.format("%s\n%s", tvContent.getText(), product));
             }
         });
@@ -233,8 +246,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         File file1 = new File(Environment.getExternalStorageDirectory() + File.separator + "testUpload.txt");
         if (!file1.exists()) {
             try {
-                if (file1.createNewFile()){
-                    FileOutputStream outputStream=new FileOutputStream(file1);
+                if (file1.createNewFile()) {
+                    FileOutputStream outputStream = new FileOutputStream(file1);
                     outputStream.write("File1:This is A File Created By WebApi Client!".getBytes("UTF-8"));
                     outputStream.flush();
                     outputStream.close();
@@ -246,8 +259,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         File file2 = new File(Environment.getExternalStorageDirectory() + File.separator + "testUpload2.txt");
         if (!file2.exists()) {
             try {
-                if (file2.createNewFile()){
-                    FileOutputStream outputStream=new FileOutputStream(file2);
+                if (file2.createNewFile()) {
+                    FileOutputStream outputStream = new FileOutputStream(file2);
                     outputStream.write("File2:This is A File Created By WebApi Client!".getBytes("UTF-8"));
                     outputStream.flush();
                     outputStream.close();
@@ -305,7 +318,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void testGet() {
         Request request = new Request.Builder()
-                .url(getServerUrl()+"api/products")
+                .url(getServerUrl() + "api/products")
                 .build();
         OkHttpClient client = new OkHttpClient();
         client.interceptors().add(interpolator);
@@ -335,10 +348,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
+    @OnClick({R.id.button1,R.id.button2,R.id.button3,R.id.button4})
     @Override
     public void onClick(View v) {
         apiClient.setBaseUrl(getServerUrl());
-      //  fileUpDownClient.setBaseUrl(getServerUrl());
+        //  fileUpDownClient.setBaseUrl(getServerUrl());
         switch (v.getId()) {
             case R.id.button1:
 //                testGet();
@@ -360,19 +374,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private String getServerUrl() {
-        return String.format("http://%s/", etServerIp.getText().toString()) ;
+        return String.format("http://%s/", etServerIp.getText().toString());
     }
 
     private void testDownloadFile() {
         OkHttpClient client = new OkHttpClient();
         client.interceptors().add(interpolator);
         Request request = new Request.Builder()
-                .url(getServerUrl()+"api/fileupdown?filename=486a0837-2a85-4280-a09d-36717c730837.png") //make sure your  the file exists on your server.
+                .url(getServerUrl() + "api/fileupdown?filename=486a0837-2a85-4280-a09d-36717c730837.png") //make sure your  the file exists on your server.
                 .build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Request request, final IOException e) {
-              //  LogUtils.d(e.toString());
+                //  LogUtils.d(e.toString());
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -414,8 +428,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         File file1 = new File(Environment.getExternalStorageDirectory() + File.separator + "testUpload.txt");
         if (!file1.exists()) {
             try {
-                if (file1.createNewFile()){
-                    FileOutputStream outputStream=new FileOutputStream(file1);
+                if (file1.createNewFile()) {
+                    FileOutputStream outputStream = new FileOutputStream(file1);
                     outputStream.write("File1:This is A File Created By WebApi Client!".getBytes("UTF-8"));
                     outputStream.flush();
                     outputStream.close();
@@ -427,8 +441,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         File file2 = new File(Environment.getExternalStorageDirectory() + File.separator + "testUpload2.txt");
         if (!file2.exists()) {
             try {
-                if (file2.createNewFile()){
-                    FileOutputStream outputStream=new FileOutputStream(file2);
+                if (file2.createNewFile()) {
+                    FileOutputStream outputStream = new FileOutputStream(file2);
                     outputStream.write("File2:This is A File Created By WebApi Client!".getBytes("UTF-8"));
                     outputStream.flush();
                     outputStream.close();
@@ -457,7 +471,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                .build();
         Request request = new Request.Builder()
                 .post(requestBody)
-                .url(getServerUrl()+"api/fileupdown")
+                .url(getServerUrl() + "api/fileupdown")
                 .build();
 
         OkHttpClient client = new OkHttpClient.Builder()
@@ -465,7 +479,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Request request, final IOException e) {
-               // LogUtils.e(e.toString());
+                // LogUtils.e(e.toString());
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -501,7 +515,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         client.newCall(postRequest).enqueue(new Callback() {
             @Override
             public void onFailure(Request request, final IOException e) {
-               // LogUtils.e(e.toString());
+                // LogUtils.e(e.toString());
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

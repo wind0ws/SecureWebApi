@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * HttpClient Use this class to provide appKey and secret.
  * Created by Threshold on 2015/12/28.
  */
 public class ClientSecretRepository implements ISecretRepository {
